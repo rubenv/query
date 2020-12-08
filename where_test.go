@@ -7,6 +7,8 @@ import (
 )
 
 func TestWhere(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	id := IDEquals(3)
@@ -17,6 +19,8 @@ func TestWhere(t *testing.T) {
 }
 
 func TestWhereNum(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	id := IDEquals(3)
@@ -27,6 +31,8 @@ func TestWhereNum(t *testing.T) {
 }
 
 func TestWhereNumOffset(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	id := IDEquals(3)
@@ -37,6 +43,8 @@ func TestWhereNumOffset(t *testing.T) {
 }
 
 func TestWhereIn(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	id := FieldIn("id", []interface{}{4, 5, 6})
@@ -49,6 +57,8 @@ func TestWhereIn(t *testing.T) {
 }
 
 func TestWhereInNum(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	id := FieldIn("id", []interface{}{4, 5, 6})
@@ -61,6 +71,8 @@ func TestWhereInNum(t *testing.T) {
 }
 
 func TestWhereAll(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	w := All()
@@ -70,6 +82,8 @@ func TestWhereAll(t *testing.T) {
 }
 
 func TestCompoundAndEmpty(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	w := And()
@@ -79,6 +93,8 @@ func TestCompoundAndEmpty(t *testing.T) {
 }
 
 func TestCompoundAndEmptyDeep(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	w := And(
@@ -92,6 +108,8 @@ func TestCompoundAndEmptyDeep(t *testing.T) {
 }
 
 func TestCompoundAndAll(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	w := And(
@@ -120,6 +138,8 @@ func TestCompoundAndAll(t *testing.T) {
 }
 
 func TestCompoundOrEmpty(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	w := Or()
@@ -129,6 +149,8 @@ func TestCompoundOrEmpty(t *testing.T) {
 }
 
 func TestExpr(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	w := Expr("e.drivers @> jsonb_build_array(jsonb_build_object('id', ?::text, 'name', ?))", 123, "Ruben")

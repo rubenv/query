@@ -7,6 +7,8 @@ import (
 )
 
 func TestInsert(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(MySQLDialect{})
@@ -59,6 +61,8 @@ func TestInsert(t *testing.T) {
 }
 
 func TestInsertNum(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(PostgreSQLDialect{})
@@ -122,6 +126,8 @@ func TestInsertNum(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(MySQLDialect{})
@@ -188,6 +194,8 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpdateNum(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(PostgreSQLDialect{})
@@ -243,6 +251,8 @@ func TestUpdateNum(t *testing.T) {
 }
 
 func TestUpsert(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(PostgreSQLDialect{})
@@ -259,6 +269,8 @@ func TestUpsert(t *testing.T) {
 }
 
 func TestUpsertNoCol(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(PostgreSQLDialect{})
@@ -275,6 +287,8 @@ func TestUpsertNoCol(t *testing.T) {
 }
 
 func TestUpsertMySQL(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(MySQLDialect{})

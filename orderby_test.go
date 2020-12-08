@@ -7,6 +7,8 @@ import (
 )
 
 func TestOrderBy(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	o := OrderBy("name")

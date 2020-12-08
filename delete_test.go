@@ -7,6 +7,8 @@ import (
 )
 
 func TestDelete(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(MySQLDialect{})
@@ -52,6 +54,8 @@ func TestDelete(t *testing.T) {
 }
 
 func TestDeleteNum(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(PostgreSQLDialect{})

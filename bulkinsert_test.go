@@ -7,6 +7,8 @@ import (
 )
 
 func TestBulkInsert(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(PostgreSQLDialect{})
@@ -36,6 +38,8 @@ func TestBulkInsert(t *testing.T) {
 }
 
 func TestBulkUpsert(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(PostgreSQLDialect{})

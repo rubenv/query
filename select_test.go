@@ -7,6 +7,8 @@ import (
 )
 
 func TestQuery(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(MySQLDialect{})
@@ -59,6 +61,8 @@ func TestQuery(t *testing.T) {
 }
 
 func TestQueryNum(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(PostgreSQLDialect{})
@@ -138,6 +142,8 @@ func TestQueryNum(t *testing.T) {
 }
 
 func TestMerge(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	o := (&Options{
@@ -158,6 +164,8 @@ func TestMerge(t *testing.T) {
 }
 
 func TestGroupBy(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	b := NewBuilder(PostgreSQLDialect{})
