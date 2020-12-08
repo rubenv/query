@@ -96,7 +96,7 @@ func (i *InsertUpdate) ToSQL() (string, []interface{}) {
 		}
 		vars = append(vars, whereVars...)
 	case upsertMode:
-		query = i.dialect.MakeUpsert(i.Table, i.conflictColumn, i.fields)
+		query = i.dialect.MakeUpsert(i.Table, i.conflictColumn, i.fields, 1)
 	default:
 		panic(fmt.Sprintf("Unknown mode: %#v", i.mode))
 	}

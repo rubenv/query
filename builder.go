@@ -20,9 +20,20 @@ func (b *Builder) Select(fields, table string) *Select {
 
 func (b *Builder) BulkInsert(table string, columns []string) *BulkInsert {
 	return &BulkInsert{
+		mode:    insertMode,
 		Table:   table,
 		Dialect: b.dialect,
 		Columns: columns,
+	}
+}
+
+func (b *Builder) BulkUpsert(table string, columns []string, conflictColumn []string) *BulkInsert {
+	return &BulkInsert{
+		mode:           upsertMode,
+		Table:          table,
+		Dialect:        b.dialect,
+		Columns:        columns,
+		conflictColumn: conflictColumn,
 	}
 }
 

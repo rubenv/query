@@ -258,6 +258,22 @@ func TestUpsert(t *testing.T) {
 	assert.Equal(v[1], 23)
 }
 
+func TestUpsertNoCol(t *testing.T) {
+	assert := assert.New(t)
+
+	b := NewBuilder(PostgreSQLDialect{})
+
+	upsert := b.Upsert("customer")
+	upsert.Add("firstname", "Jack")
+	upsert.Add("age", 23)
+
+	s, v := upsert.ToSQL()
+	assert.Equal(s, "INSERT INTO customer (firstname, age) VALUES ($1, $2) ON CONFLICT DO NOTHING")
+	assert.Equal(len(v), 2)
+	assert.Equal(v[0], "Jack")
+	assert.Equal(v[1], 23)
+}
+
 func TestUpsertMySQL(t *testing.T) {
 	assert := assert.New(t)
 

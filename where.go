@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -94,6 +95,14 @@ func IntFieldIn(field string, values []int64) Where {
 	return FieldIn(field, s)
 }
 
+func StringFieldIn(field string, values []string) Where {
+	s := make([]interface{}, len(values))
+	for i, v := range values {
+		s[i] = v
+	}
+	return FieldIn(field, s)
+}
+
 func Exists(subQuery *Select) Where {
 	return Where{
 		mode:     subqueryClause,
@@ -148,10 +157,11 @@ func FieldGreaterOrEqualThan(field string, value interface{}) Where {
 	return FieldOp(field, ">=", value)
 }
 
-func Expr(expr string) Where {
+func Expr(expr string, args ...interface{}) Where {
 	return Where{
-		mode:  exprClause,
-		field: expr,
+		mode:   exprClause,
+		field:  expr,
+		values: args,
 	}
 }
 
@@ -168,6 +178,8 @@ func (w Where) IsEmpty() bool {
 
 	return w.mode == emptyClause
 }
+
+var placeholderRe = regexp.MustCompile(`\?+`)
 
 func (w Where) Generate(offset int, dialect Dialect) (string, []interface{}) {
 	switch w.mode {
@@ -194,20 +206,22 @@ func (w Where) Generate(offset int, dialect Dialect) (string, []interface{}) {
 	case likeClause:
 		return fmt.Sprintf("%s LIKE %s", w.field, dialect.Placeholder(offset)), []interface{}{fmt.Sprintf("%%%s%%", w.value)}
 	case exprClause:
-		return w.field, nil
+		placeholders := offset
+		expr := placeholderRe.ReplaceAllStringFunc(w.field, func(match string) string {
+			if match == "??" {
+				return "?"
+			}
+			s := dialect.Placeholder(placeholders)
+			placeholders += 1
+			return s
+		})
+		return expr, w.values
 	case subqueryClause:
 		q, args := w.subQuery.toSQL(offset)
 		return fmt.Sprintf("%s (%s)", w.op, q), args
 	default:
 		panic(fmt.Sprintf("Unknown mode %#v", w.mode))
 	}
-}
-
-// Generates a string from the values assigned to the query
-func (w Where) String(dialect Dialect) string {
-	s, _ := w.Generate(0, dialect)
-
-	return s
 }
 
 func (w Where) generateCompound(offset int, verb string, dialect Dialect, topLevel bool) (string, []interface{}) {

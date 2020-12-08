@@ -127,3 +127,20 @@ func TestCompoundOrEmpty(t *testing.T) {
 	assert.Equal(s, "")
 	assert.Equal(len(v), 0)
 }
+
+func TestExpr(t *testing.T) {
+	assert := assert.New(t)
+
+	w := Expr("e.drivers @> jsonb_build_array(jsonb_build_object('id', ?::text, 'name', ?))", 123, "Ruben")
+	s, v := w.Generate(1, PostgreSQLDialect{})
+	assert.Equal(s, "e.drivers @> jsonb_build_array(jsonb_build_object('id', $2::text, 'name', $3))")
+	assert.Equal(len(v), 2)
+	assert.Equal(v[0], 123)
+	assert.Equal(v[1], "Ruben")
+
+	w = Expr("e.drivers ?? ?", "Ruben")
+	s, v = w.Generate(0, PostgreSQLDialect{})
+	assert.Equal(s, "e.drivers ? $1")
+	assert.Equal(len(v), 1)
+	assert.Equal(v[0], "Ruben")
+}

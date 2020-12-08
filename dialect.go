@@ -8,7 +8,7 @@ import (
 type Dialect interface {
 	Placeholder(idx int) string
 	UseLastInsertId() bool
-	MakeUpsert(table string, conflictColumn []string, fields []fieldValue) string
+	MakeUpsert(table string, conflictColumn []string, fields []fieldValue, rows int) string
 }
 
 func DialectFromString(dialect string) (Dialect, error) {
@@ -36,15 +36,24 @@ func (d MySQLDialect) UseLastInsertId() bool {
 	return true
 }
 
-func (d MySQLDialect) MakeUpsert(table string, conflictColumn []string, fields []fieldValue) string {
+func (d MySQLDialect) MakeUpsert(table string, conflictColumn []string, fields []fieldValue, rows int) string {
 	fieldNames := make([]string, 0)
-	values := make([]string, 0)
+	placeholders := make([]string, 0)
 
-	for j := 0; j < len(fields); j++ {
-		fieldNames = append(fieldNames, fields[j].key)
-		values = append(values, d.Placeholder(j))
+	for _, fn := range fields {
+		fieldNames = append(fieldNames, fn.key)
 	}
-	return fmt.Sprintf("REPLACE INTO %s (%s) VALUES (%s)", table, strings.Join(fieldNames, ", "), strings.Join(values, ", "))
+
+	placeholderVars := make([]string, 0)
+	for range fields {
+		placeholderVars = append(placeholderVars, "?")
+	}
+	placeholder := fmt.Sprintf("(%s)", strings.Join(placeholderVars, ", "))
+	for i := 0; i < rows; i++ {
+		placeholders = append(placeholders, placeholder)
+	}
+
+	return fmt.Sprintf("REPLACE INTO %s (%s) VALUES %s", table, strings.Join(fieldNames, ", "), strings.Join(placeholders, ", "))
 }
 
 // Generates queries using numbered placeholders
@@ -59,8 +68,8 @@ func (d SqliteDialect) UseLastInsertId() bool {
 	return true
 }
 
-func (d SqliteDialect) MakeUpsert(table string, conflictColumn []string, fields []fieldValue) string {
-	return postgreSQLUpsert(table, conflictColumn, fields)
+func (d SqliteDialect) MakeUpsert(table string, conflictColumn []string, fields []fieldValue, rows int) string {
+	return postgreSQLUpsert(table, conflictColumn, fields, rows)
 }
 
 // Generates queries using numbered placeholders
@@ -75,8 +84,8 @@ func (d PostgreSQLDialect) UseLastInsertId() bool {
 	return false
 }
 
-func (d PostgreSQLDialect) MakeUpsert(table string, conflictColumn []string, fields []fieldValue) string {
-	return postgreSQLUpsert(table, conflictColumn, fields)
+func (d PostgreSQLDialect) MakeUpsert(table string, conflictColumn []string, fields []fieldValue, rows int) string {
+	return postgreSQLUpsert(table, conflictColumn, fields, rows)
 }
 
 // Shared functionality
@@ -84,15 +93,33 @@ func numberedPlaceholder(idx int) string {
 	return fmt.Sprintf("$%d", idx+1)
 }
 
-func postgreSQLUpsert(table string, conflictColumn []string, fields []fieldValue) string {
+func postgreSQLUpsert(table string, conflictColumn []string, fields []fieldValue, rows int) string {
 	fieldNames := make([]string, 0)
-	values := make([]string, 0)
-	updates := make([]string, 0)
+	placeholders := make([]string, 0)
 
-	for j := 0; j < len(fields); j++ {
-		fieldNames = append(fieldNames, fields[j].key)
-		values = append(values, numberedPlaceholder(j))
-		updates = append(updates, fmt.Sprintf("%s=EXCLUDED.%s", fields[j].key, fields[j].key))
+	for _, fn := range fields {
+		fieldNames = append(fieldNames, fn.key)
 	}
-	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO UPDATE SET %s", table, strings.Join(fieldNames, ", "), strings.Join(values, ", "), strings.Join(conflictColumn, ", "), strings.Join(updates, ", "))
+
+	for i := 0; i < rows; i++ {
+		placeholderVars := make([]string, 0)
+		for j := range fields {
+			placeholderVars = append(placeholderVars, numberedPlaceholder(i*len(fields)+j))
+		}
+		placeholder := fmt.Sprintf("(%s)", strings.Join(placeholderVars, ", "))
+		placeholders = append(placeholders, placeholder)
+	}
+	conflictCol := ""
+	if len(conflictColumn) > 0 {
+		conflictCol = fmt.Sprintf(" (%s)", strings.Join(conflictColumn, ", "))
+	}
+	action := "NOTHING"
+	if len(conflictColumn) > 0 {
+		updates := make([]string, 0)
+		for _, fn := range fieldNames {
+			updates = append(updates, fmt.Sprintf("%s=EXCLUDED.%s", fn, fn))
+		}
+		action = fmt.Sprintf("UPDATE SET %s", strings.Join(updates, ", "))
+	}
+	return fmt.Sprintf("INSERT INTO %s (%s) VALUES %s ON CONFLICT%s DO %s", table, strings.Join(fieldNames, ", "), strings.Join(placeholders, ", "), conflictCol, action)
 }
