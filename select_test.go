@@ -124,6 +124,17 @@ func TestQueryNum(t *testing.T) {
 	assert.Equal(len(v), 2)
 	assert.Equal(v[0], false)
 	assert.Equal(v[1], true)
+
+	s, v = b.Select("*", "contacts").
+		Where(Exists(b.Select("*", "places").Where(FieldEquals("country", "BE")))).
+		Where(Any(b.Select("*", "countries").Where(FieldEquals("region", "EU")))).
+		Where(FieldEquals("activated", true)).
+		ToSQL()
+	assert.Equal(s, "SELECT * FROM contacts WHERE EXISTS (SELECT * FROM places WHERE country=$1) AND ANY (SELECT * FROM countries WHERE region=$2) AND activated=$3")
+	assert.Equal(len(v), 3)
+	assert.Equal(v[0], "BE")
+	assert.Equal(v[1], "EU")
+	assert.Equal(v[2], true)
 }
 
 func TestMerge(t *testing.T) {

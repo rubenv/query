@@ -81,6 +81,10 @@ func (s *Select) LeftJoin(table string, on Where) *Select {
 }
 
 func (s *Select) ToSQL() (string, []interface{}) {
+	return s.toSQL(0)
+}
+
+func (s *Select) toSQL(offset int) (string, []interface{}) {
 	b := strings.Builder{}
 	args := make([]interface{}, 0)
 	b.WriteString(fmt.Sprintf("SELECT %s FROM %s", s.Fields, s.Table))
@@ -90,12 +94,12 @@ func (s *Select) ToSQL() (string, []interface{}) {
 		b.WriteString(" JOIN ")
 		b.WriteString(join.Table)
 		b.WriteString(" ON ")
-		q, v := join.On.Generate(len(args), s.Dialect)
+		q, v := join.On.Generate(offset+len(args), s.Dialect)
 		b.WriteString(q)
 		args = append(args, v...)
 	}
 	if !s.Options.Where.IsEmpty() {
-		q, v := s.Options.Where.Generate(len(args), s.Dialect)
+		q, v := s.Options.Where.Generate(offset+len(args), s.Dialect)
 		if len(q) > 0 {
 			b.WriteString(" WHERE ")
 			b.WriteString(q)

@@ -16,6 +16,7 @@ const (
 	likeClause
 	opClause
 	exprClause
+	subqueryClause
 )
 
 type Where struct {
@@ -27,6 +28,8 @@ type Where struct {
 	value    interface{}
 	values   []interface{}
 	children []Where
+
+	subQuery *Select
 }
 
 func All() Where {
@@ -89,6 +92,22 @@ func IntFieldIn(field string, values []int64) Where {
 		s[i] = v
 	}
 	return FieldIn(field, s)
+}
+
+func Exists(subQuery *Select) Where {
+	return Where{
+		mode:     subqueryClause,
+		op:       "EXISTS",
+		subQuery: subQuery,
+	}
+}
+
+func Any(subQuery *Select) Where {
+	return Where{
+		mode:     subqueryClause,
+		op:       "ANY",
+		subQuery: subQuery,
+	}
 }
 
 func And(w ...Where) Where {
@@ -176,6 +195,9 @@ func (w Where) Generate(offset int, dialect Dialect) (string, []interface{}) {
 		return fmt.Sprintf("%s LIKE %s", w.field, dialect.Placeholder(offset)), []interface{}{fmt.Sprintf("%%%s%%", w.value)}
 	case exprClause:
 		return w.field, nil
+	case subqueryClause:
+		q, args := w.subQuery.toSQL(offset)
+		return fmt.Sprintf("%s (%s)", w.op, q), args
 	default:
 		panic(fmt.Sprintf("Unknown mode %#v", w.mode))
 	}
