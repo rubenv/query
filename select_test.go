@@ -174,3 +174,15 @@ func TestGroupBy(t *testing.T) {
 	assert.Equal(s, "SELECT sum(age) FROM contacts GROUP BY gender")
 	assert.Equal(len(v), 0)
 }
+
+func TestUnion(t *testing.T) {
+	t.Parallel()
+
+	assert := assert.New(t)
+
+	b := NewBuilder(PostgreSQLDialect{})
+
+	s, v := b.Select("*", "contacts").Union(b.Select("*", "archived_contacts")).ToSQL()
+	assert.Equal(s, "SELECT * FROM contacts UNION SELECT * FROM archived_contacts")
+	assert.Equal(len(v), 0)
+}

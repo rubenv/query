@@ -12,6 +12,7 @@ type Select struct {
 	Table   string
 	Options Options
 	Joins   []Join
+	Unions  []*Select
 }
 
 type Join struct {
@@ -80,6 +81,11 @@ func (s *Select) LeftJoin(table string, on Where) *Select {
 	return s
 }
 
+func (s *Select) Union(o *Select) *Select {
+	s.Unions = append(s.Unions, o)
+	return s
+}
+
 func (s *Select) ToSQL() (string, []interface{}) {
 	return s.toSQL(0)
 }
@@ -109,6 +115,12 @@ func (s *Select) toSQL(offset int) (string, []interface{}) {
 	if s.Options.GroupBy != "" {
 		b.WriteString(" GROUP BY ")
 		b.WriteString(s.Options.GroupBy)
+	}
+	for _, u := range s.Unions {
+		q, v := u.toSQL(offset + len(args))
+		b.WriteString(" UNION ")
+		b.WriteString(q)
+		args = append(args, v...)
 	}
 	if !s.Options.OrderBy.IsEmpty() {
 		o := s.Options.OrderBy.generate()
