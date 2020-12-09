@@ -9,5 +9,5 @@ func Now() driver.Valuer {
 }
 
 func (n *now) Value() (driver.Value, error) {
-	return "NOW()", nil
+	return "CURRENT_TIMESTAMP", nil
 }
