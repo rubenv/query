@@ -15,6 +15,7 @@ const (
 	inClause
 	notInClause
 	likeClause
+	ilikeClause
 	opClause
 	exprClause
 	subqueryClause
@@ -141,6 +142,14 @@ func FieldLike(field string, value interface{}) Where {
 	}
 }
 
+func FieldILike(field string, value interface{}) Where {
+	return Where{
+		mode:  ilikeClause,
+		field: field,
+		value: value,
+	}
+}
+
 func FieldLessThan(field string, value interface{}) Where {
 	return FieldOp(field, "<", value)
 }
@@ -205,6 +214,8 @@ func (w Where) Generate(offset int, dialect Dialect) (string, []interface{}) {
 		return fmt.Sprintf("%s NOT IN (%s)", w.field, strings.Join(placeholders, ", ")), w.values
 	case likeClause:
 		return fmt.Sprintf("%s LIKE %s", w.field, dialect.Placeholder(offset)), []interface{}{fmt.Sprintf("%%%s%%", w.value)}
+	case ilikeClause:
+		return fmt.Sprintf("%s ILIKE %s", w.field, dialect.Placeholder(offset)), []interface{}{fmt.Sprintf("%%%s%%", w.value)}
 	case exprClause:
 		placeholders := offset
 		expr := placeholderRe.ReplaceAllStringFunc(w.field, func(match string) string {
