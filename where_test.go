@@ -70,6 +70,17 @@ func TestWhereInNum(t *testing.T) {
 	assert.Equal(v[2], 6)
 }
 
+func TestWhereIsNull(t *testing.T) {
+	t.Parallel()
+
+	assert := assert.New(t)
+
+	id := IsNull("id")
+	s, v := id.Generate(0, PostgreSQLDialect{})
+	assert.Equal(s, "id IS NULL")
+	assert.Equal(len(v), 0)
+}
+
 func TestWhereAll(t *testing.T) {
 	t.Parallel()
 
