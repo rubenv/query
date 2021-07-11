@@ -1,6 +1,7 @@
 package query
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -58,6 +59,17 @@ func TestQuery(t *testing.T) {
 	s, v = b.Select("*", "contacts").Where(And()).ToSQL()
 	assert.Equal(s, "SELECT * FROM contacts")
 	assert.Equal(len(v), 0)
+
+	sq, sv := b.Select("*", "contacts").Where(FieldNotEquals("age", 5)).ToSQL()
+	assert.Equal(sq, "SELECT * FROM contacts WHERE age!=?")
+	assert.Equal(len(sv), 1)
+	assert.Equal(sv[0], 5)
+
+	s, v = b.Select("count(c.*)", fmt.Sprintf("(%s) c", sq), sv...).Where(FieldGreaterThan("c.age", 25)).ToSQL()
+	assert.Equal(s, "SELECT count(c.*) FROM (SELECT * FROM contacts WHERE age!=?) c WHERE c.age>?")
+	assert.Equal(len(v), 2)
+	assert.Equal(v[0], 5)
+	assert.Equal(v[1], 25)
 }
 
 func TestQueryNum(t *testing.T) {
@@ -139,6 +151,17 @@ func TestQueryNum(t *testing.T) {
 	assert.Equal(v[0], "BE")
 	assert.Equal(v[1], "EU")
 	assert.Equal(v[2], true)
+
+	sq, sv := b.Select("*", "contacts").Where(FieldNotEquals("age", 5)).ToSQL()
+	assert.Equal(sq, "SELECT * FROM contacts WHERE age!=$1")
+	assert.Equal(len(sv), 1)
+	assert.Equal(sv[0], 5)
+
+	s, v = b.Select("count(c.*)", fmt.Sprintf("(%s) c", sq), sv...).Where(FieldGreaterThan("c.age", 25)).ToSQL()
+	assert.Equal(s, "SELECT count(c.*) FROM (SELECT * FROM contacts WHERE age!=$1) c WHERE c.age>$2")
+	assert.Equal(len(v), 2)
+	assert.Equal(v[0], 5)
+	assert.Equal(v[1], 25)
 }
 
 func TestMerge(t *testing.T) {

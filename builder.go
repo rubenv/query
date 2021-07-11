@@ -10,11 +10,12 @@ func NewBuilder(dialect Dialect) *Builder {
 	}
 }
 
-func (b *Builder) Select(fields, table string) *Select {
+func (b *Builder) Select(fields, table string, args ...interface{}) *Select {
 	return &Select{
 		Dialect: b.dialect,
 		Fields:  fields,
 		Table:   table,
+		Args:    args,
 	}
 }
 

@@ -13,6 +13,7 @@ type Select struct {
 	Options Options
 	Joins   []Join
 	Unions  []*Select
+	Args    []interface{}
 }
 
 type Join struct {
@@ -93,6 +94,7 @@ func (s *Select) ToSQL() (string, []interface{}) {
 func (s *Select) toSQL(offset int) (string, []interface{}) {
 	b := strings.Builder{}
 	args := make([]interface{}, 0)
+	args = append(args, s.Args...)
 	b.WriteString(fmt.Sprintf("SELECT %s FROM %s", s.Fields, s.Table))
 	for _, join := range s.Joins {
 		b.WriteString(" ")
