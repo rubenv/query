@@ -61,7 +61,7 @@ type SqliteDialect struct {
 }
 
 func (d SqliteDialect) Placeholder(idx int) string {
-	return numberedPlaceholder(idx)
+	return "?"
 }
 
 func (d SqliteDialect) UseLastInsertId() bool {
