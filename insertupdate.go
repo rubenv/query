@@ -33,6 +33,32 @@ func (i *InsertUpdate) Add(key string, value interface{}) *InsertUpdate {
 	return i
 }
 
+func (i *InsertUpdate) addStructFields(options *InsertUpdateOptions, t reflect.Type, v reflect.Value) {
+	for j := 0; j < t.NumField(); j++ {
+		field := t.Field(j)
+		if field.Anonymous {
+			i.addStructFields(options, field.Type, v.Field(j))
+		}
+		tag := field.Tag.Get("db")
+		parts := strings.Split(tag, ",")
+		if parts[0] == "" || parts[0] == "-" {
+			continue
+		}
+		if len(parts) > 1 {
+			if parts[1] == "autoincrement" {
+				val := v.Field(j)
+				if val.IsZero() && !options.CopyAutoIncrement {
+					continue
+				}
+			}
+			if parts[1] == "readonly" && !options.CopyReadOnly {
+				continue
+			}
+		}
+		i.Add(parts[0], v.Field(j).Interface())
+	}
+}
+
 func (i *InsertUpdate) With(obj interface{}, opts ...WithOpt) *InsertUpdate {
 	options := &InsertUpdateOptions{}
 	for _, o := range opts {
@@ -45,23 +71,7 @@ func (i *InsertUpdate) With(obj interface{}, opts ...WithOpt) *InsertUpdate {
 	}
 	t := v.Type()
 	if t.Kind() == reflect.Struct {
-		for j := 0; j < t.NumField(); j++ {
-			field := t.Field(j)
-			tag := field.Tag.Get("db")
-			parts := strings.Split(tag, ",")
-			if parts[0] == "" || parts[0] == "-" {
-				continue
-			}
-			if len(parts) > 1 {
-				if parts[1] == "autoincrement" && !options.CopyAutoIncrement {
-					continue
-				}
-				if parts[1] == "readonly" && !options.CopyReadOnly {
-					continue
-				}
-			}
-			i.Add(parts[0], v.Field(j).Interface())
-		}
+		i.addStructFields(options, t, v)
 	}
 	return i
 }

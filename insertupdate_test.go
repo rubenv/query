@@ -32,7 +32,14 @@ func TestInsert(t *testing.T) {
 	assert.Equal(v[0], "Jack")
 	assert.Equal(v[1], 23)
 
+	type VAT struct {
+		Nr int64 `db:"nr"`
+	}
+
 	type Company struct {
+		ID   int64  `db:"id,autoincrement"`
+		Name string `db:"name"`
+		VAT
 	}
 
 	type Customer struct {
@@ -58,6 +65,34 @@ func TestInsert(t *testing.T) {
 	assert.Equal(v[0], "Jack")
 	assert.Equal(v[1], int64(23))
 	assert.Equal(v[2], "xxx")
+
+	s, v = b.Insert("company").
+		With(&Company{
+			Name: "Corp",
+			VAT: VAT{
+				Nr: 1234,
+			},
+		}).
+		ToSQL()
+	assert.Equal(s, "INSERT INTO company (name, nr) VALUES (?, ?)")
+	assert.Equal(len(v), 2)
+	assert.Equal(v[0], "Corp")
+	assert.Equal(v[1], int64(1234))
+
+	s, v = b.Insert("company").
+		With(&Company{
+			ID:   123,
+			Name: "Corp",
+			VAT: VAT{
+				Nr: 1234,
+			},
+		}).
+		ToSQL()
+	assert.Equal(s, "INSERT INTO company (id, name, nr) VALUES (?, ?, ?)")
+	assert.Equal(len(v), 3)
+	assert.Equal(v[0], int64(123))
+	assert.Equal(v[1], "Corp")
+	assert.Equal(v[2], int64(1234))
 }
 
 func TestInsertNum(t *testing.T) {
