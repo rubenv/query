@@ -162,6 +162,12 @@ func TestQueryNum(t *testing.T) {
 	assert.Equal(len(v), 2)
 	assert.Equal(v[0], 5)
 	assert.Equal(v[1], 25)
+
+	s, v = b.Select("*", "test").Where(In("team", b.Select("id", "teams").Where(IDEquals(3)))).Where(IDEquals(2)).ToSQL()
+	assert.Equal(s, "SELECT * FROM test WHERE team IN (SELECT id FROM teams WHERE id=$1) AND id=$2")
+	assert.Equal(len(v), 2)
+	assert.Equal(v[0], 3)
+	assert.Equal(v[1], 2)
 }
 
 func TestMerge(t *testing.T) {

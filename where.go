@@ -121,6 +121,15 @@ func Any(subQuery *Select) Where {
 	}
 }
 
+func In(field string, subQuery *Select) Where {
+	return Where{
+		mode:     subqueryClause,
+		field:    field,
+		op:       "IN",
+		subQuery: subQuery,
+	}
+}
+
 func And(w ...Where) Where {
 	return Where{
 		mode:     andClause,
@@ -238,8 +247,12 @@ func (w Where) Generate(offset int, dialect Dialect) (string, []interface{}) {
 	case nullClause:
 		return fmt.Sprintf("%s IS NULL", w.field), []interface{}{}
 	case subqueryClause:
+		f := ""
+		if w.field != "" {
+			f = fmt.Sprintf("%s ", w.field)
+		}
 		q, args := w.subQuery.toSQL(offset)
-		return fmt.Sprintf("%s (%s)", w.op, q), args
+		return fmt.Sprintf("%s%s (%s)", f, w.op, q), args
 	default:
 		panic(fmt.Sprintf("Unknown mode %#v", w.mode))
 	}
