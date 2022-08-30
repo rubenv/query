@@ -130,6 +130,15 @@ func In(field string, subQuery *Select) Where {
 	}
 }
 
+func ArrayOverlaps(field string, subQuery *Select) Where {
+	return Where{
+		mode:     subqueryClause,
+		field:    field,
+		op:       "&&",
+		subQuery: subQuery,
+	}
+}
+
 func And(w ...Where) Where {
 	return Where{
 		mode:     andClause,
