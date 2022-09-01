@@ -20,6 +20,7 @@ const (
 	exprClause
 	subqueryClause
 	nullClause
+	notNullClause
 )
 
 type Where struct {
@@ -200,6 +201,13 @@ func IsNull(field string) Where {
 	}
 }
 
+func IsNotNull(field string) Where {
+	return Where{
+		mode:  notNullClause,
+		field: field,
+	}
+}
+
 func (w Where) IsEmpty() bool {
 	if w.mode == andClause || w.mode == orClause {
 		isEmpty := true
@@ -255,6 +263,8 @@ func (w Where) Generate(offset int, dialect Dialect) (string, []interface{}) {
 		return expr, w.values
 	case nullClause:
 		return fmt.Sprintf("%s IS NULL", w.field), []interface{}{}
+	case notNullClause:
+		return fmt.Sprintf("%s IS NOT NULL", w.field), []interface{}{}
 	case subqueryClause:
 		f := ""
 		if w.field != "" {
