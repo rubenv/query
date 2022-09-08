@@ -5,7 +5,7 @@ type Options struct {
 	Limit   int64
 	Offset  int64
 	GroupBy string
-	OrderBy Order
+	OrderBy []string
 
 	Args []interface{}
 }
@@ -21,8 +21,8 @@ func (o *Options) Merge(opts *Options) *Options {
 		if opts.Offset > 0 {
 			o.Offset = opts.Offset
 		}
-		if !opts.OrderBy.IsEmpty() {
-			o.OrderBy = opts.OrderBy
+		if len(opts.OrderBy) > 0 {
+			o.OrderBy = append(o.OrderBy, opts.OrderBy...)
 		}
 	}
 

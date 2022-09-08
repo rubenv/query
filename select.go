@@ -49,19 +49,21 @@ func (s *Select) Offset(offset int64) *Select {
 	return s
 }
 
-func (s *Select) OrderBy(field string) *Select {
-	s.Options.OrderBy = OrderBy(field)
+func (s *Select) OrderBy(fields ...string) *Select {
+	s.Options.OrderBy = append(s.Options.OrderBy, fields...)
 	return s
 }
 
 func (s *Select) OrderByDesc(field string) *Select {
-	s.Options.OrderBy = OrderByDesc(field)
-	return s
+	return s.OrderBy(fmt.Sprintf("%s DESC", field))
 }
 
 func (s *Select) OrderByDir(field string, desc bool) *Select {
-	s.Options.OrderBy = OrderByDir(field, desc)
-	return s
+	if desc {
+		return s.OrderByDesc(field)
+	} else {
+		return s.OrderBy(field)
+	}
 }
 
 func (s *Select) Join(table string, on Where) *Select {
@@ -124,10 +126,9 @@ func (s *Select) toSQL(offset int) (string, []interface{}) {
 		b.WriteString(q)
 		args = append(args, v...)
 	}
-	if !s.Options.OrderBy.IsEmpty() {
-		o := s.Options.OrderBy.generate()
+	if len(s.Options.OrderBy) > 0 {
 		b.WriteString(" ORDER BY ")
-		b.WriteString(o)
+		b.WriteString(strings.Join(s.Options.OrderBy, ", "))
 	}
 	if s.Options.Limit > 0 {
 		b.WriteString(" LIMIT ")

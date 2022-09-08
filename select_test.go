@@ -181,14 +181,14 @@ func TestMerge(t *testing.T) {
 	}).Merge(&Options{
 		Offset:  20,
 		Limit:   15,
-		OrderBy: OrderByDesc("name"),
+		OrderBy: []string{"name DESC"},
 	})
 
 	assert.Equal(o, &Options{
 		Where:   FieldEquals("test", 123),
 		Offset:  20,
 		Limit:   15,
-		OrderBy: OrderByDesc("name"),
+		OrderBy: []string{"name DESC"},
 	})
 }
 
