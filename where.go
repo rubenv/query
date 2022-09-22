@@ -106,6 +106,14 @@ func StringFieldIn(field string, values []string) Where {
 	return FieldIn(field, s)
 }
 
+func StringFieldNotIn(field string, values []string) Where {
+	s := make([]interface{}, len(values))
+	for i, v := range values {
+		s[i] = v
+	}
+	return FieldNotIn(field, s)
+}
+
 func Exists(subQuery *Select) Where {
 	return Where{
 		mode:     subqueryClause,
