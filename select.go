@@ -34,6 +34,18 @@ func (s *Select) Where(where Where) *Select {
 	return s
 }
 
+func (s *Select) Having(where Where) *Select {
+	if s.Options.Having.IsEmpty() {
+		s.Options.Having = And()
+		s.Options.Having.topLevel = true
+	}
+	if s.Options.Having.mode != andClause {
+		panic("Cannot chain Having() if you've set a manual having clause")
+	}
+	s.Options.Having.children = append(s.Options.Having.children, where)
+	return s
+}
+
 func (s *Select) GroupBy(field string) *Select {
 	s.Options.GroupBy = field
 	return s
@@ -119,6 +131,14 @@ func (s *Select) toSQL(offset int) (string, []interface{}) {
 	if s.Options.GroupBy != "" {
 		b.WriteString(" GROUP BY ")
 		b.WriteString(s.Options.GroupBy)
+	}
+	if !s.Options.Having.IsEmpty() {
+		q, v := s.Options.Having.Generate(offset+len(args), s.Dialect)
+		if len(q) > 0 {
+			b.WriteString(" HAVING ")
+			b.WriteString(q)
+			args = append(args, v...)
+		}
 	}
 	for _, u := range s.Unions {
 		q, v := u.toSQL(offset + len(args))

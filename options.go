@@ -6,6 +6,7 @@ type Options struct {
 	Offset  int64
 	GroupBy string
 	OrderBy []string
+	Having  Where
 
 	Args []interface{}
 }
@@ -23,6 +24,9 @@ func (o *Options) Merge(opts *Options) *Options {
 		}
 		if len(opts.OrderBy) > 0 {
 			o.OrderBy = append(o.OrderBy, opts.OrderBy...)
+		}
+		if !opts.Having.IsEmpty() {
+			o.Having = opts.Having
 		}
 	}
 
