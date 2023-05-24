@@ -220,3 +220,33 @@ func TestUnion(t *testing.T) {
 	assert.Equal(s, "SELECT * FROM contacts UNION SELECT * FROM archived_contacts")
 	assert.Equal(len(v), 0)
 }
+
+func TestCTE(t *testing.T) {
+	t.Parallel()
+
+	assert := assert.New(t)
+
+	b := NewBuilder(PostgreSQLDialect{})
+
+	s, v := b.Select("hour, sum(count) over (order by hour asc rows between unbounded preceding and current row)", "data").
+		With(With{
+			Name:      "data",
+			SubSelect: b.Select("date_trunc('hour', created_at) as hour, count(1)", "orders").Where(FieldEquals("user", 226)).GroupBy("1"),
+		}).
+		With(With{
+			Name:      "other",
+			SubSelect: b.Select("*", "test").Where(FieldEquals("field", "a")),
+		}).
+		Where(FieldEquals("x", 3)).
+		ToSQL()
+
+	assert.Len(v, 3)
+	assert.Equal(v[0], 226)
+	assert.Equal(v[1], "a")
+	assert.Equal(v[2], 3)
+
+	assert.Equal(`WITH
+    data AS (SELECT date_trunc('hour', created_at) as hour, count(1) FROM orders WHERE user=$1 GROUP BY 1),
+    other AS (SELECT * FROM test WHERE field=$2)
+SELECT hour, sum(count) over (order by hour asc rows between unbounded preceding and current row) FROM data WHERE x=$3`, s)
+}

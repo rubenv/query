@@ -13,7 +13,13 @@ type Select struct {
 	Options Options
 	Joins   []Join
 	Unions  []*Select
+	CTEs    []With
 	Args    []interface{}
+}
+
+type With struct {
+	Name      string
+	SubSelect *Select
 }
 
 type Join struct {
@@ -101,6 +107,11 @@ func (s *Select) Union(o *Select) *Select {
 	return s
 }
 
+func (s *Select) With(o With) *Select {
+	s.CTEs = append(s.CTEs, o)
+	return s
+}
+
 func (s *Select) ToSQL() (string, []interface{}) {
 	return s.toSQL(0)
 }
@@ -108,6 +119,20 @@ func (s *Select) ToSQL() (string, []interface{}) {
 func (s *Select) toSQL(offset int) (string, []interface{}) {
 	b := strings.Builder{}
 	args := make([]interface{}, 0)
+
+	if len(s.CTEs) > 0 {
+		b.WriteString("WITH\n")
+		for i, w := range s.CTEs {
+			if i > 0 {
+				b.WriteString(",\n")
+			}
+			q, a := w.SubSelect.toSQL(len(args))
+			b.WriteString(fmt.Sprintf("    %s AS (%s)", w.Name, q))
+			args = append(args, a...)
+		}
+		b.WriteString("\n")
+	}
+
 	args = append(args, s.Args...)
 	b.WriteString(fmt.Sprintf("SELECT %s FROM %s", s.Fields, s.Table))
 	for _, join := range s.Joins {
