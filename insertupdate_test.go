@@ -283,6 +283,15 @@ func TestUpdateNum(t *testing.T) {
 	assert.Equal(s, "UPDATE customer SET firstname=$1")
 	assert.Equal(len(v), 1)
 	assert.Equal(v[0], "Bob")
+
+	update := b.Update("customer", Expr("id=?", 4))
+	update.Add("firstname", "Jack")
+
+	s, v = update.ToSQL()
+	assert.Equal(s, "UPDATE customer SET firstname=$1 WHERE id=$2")
+	assert.Equal(len(v), 2)
+	assert.Equal(v[0], "Jack")
+	assert.Equal(v[1], 4)
 }
 
 func TestUpsert(t *testing.T) {
