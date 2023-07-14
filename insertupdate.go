@@ -26,6 +26,7 @@ type InsertUpdate struct {
 	fields         []fieldValue
 	dialect        Dialect
 	conflictColumn []string
+	returning      string
 }
 
 func (i *InsertUpdate) Add(key string, value interface{}) *InsertUpdate {
@@ -76,6 +77,11 @@ func (i *InsertUpdate) With(obj interface{}, opts ...WithOpt) *InsertUpdate {
 	return i
 }
 
+func (i *InsertUpdate) Returning(field string) *InsertUpdate {
+	i.returning = field
+	return i
+}
+
 func (i *InsertUpdate) ToSQL() (string, []interface{}) {
 	query := ""
 	vars := make([]interface{}, 0)
@@ -109,6 +115,10 @@ func (i *InsertUpdate) ToSQL() (string, []interface{}) {
 		query = i.dialect.MakeUpsert(i.Table, i.conflictColumn, i.fields, 1)
 	default:
 		panic(fmt.Sprintf("Unknown mode: %#v", i.mode))
+	}
+
+	if i.returning != "" {
+		query = fmt.Sprintf("%s RETURNING %s", query, i.returning)
 	}
 
 	return query, vars

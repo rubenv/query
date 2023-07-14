@@ -87,8 +87,9 @@ func TestInsert(t *testing.T) {
 				Nr: 1234,
 			},
 		}).
+		Returning("id").
 		ToSQL()
-	assert.Equal(s, "INSERT INTO company (id, name, nr) VALUES (?, ?, ?)")
+	assert.Equal(s, "INSERT INTO company (id, name, nr) VALUES (?, ?, ?) RETURNING id")
 	assert.Equal(len(v), 3)
 	assert.Equal(v[0], int64(123))
 	assert.Equal(v[1], "Corp")
