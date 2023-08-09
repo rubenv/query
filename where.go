@@ -98,6 +98,14 @@ func IntFieldIn(field string, values []int64) Where {
 	return FieldIn(field, s)
 }
 
+func IntFieldNotIn(field string, values []int64) Where {
+	s := make([]interface{}, len(values))
+	for i, v := range values {
+		s[i] = v
+	}
+	return FieldNotIn(field, s)
+}
+
 func StringFieldIn(field string, values []string) Where {
 	s := make([]interface{}, len(values))
 	for i, v := range values {
