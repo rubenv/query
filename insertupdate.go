@@ -24,6 +24,7 @@ type InsertUpdate struct {
 	Table          string
 	where          Where
 	fields         []fieldValue
+	fromSelect     *Select
 	dialect        Dialect
 	conflictColumn []string
 	returning      string
@@ -77,6 +78,11 @@ func (i *InsertUpdate) With(obj interface{}, opts ...WithOpt) *InsertUpdate {
 	return i
 }
 
+func (i *InsertUpdate) Select(s *Select) *InsertUpdate {
+	i.fromSelect = s
+	return i
+}
+
 func (i *InsertUpdate) Returning(field string) *InsertUpdate {
 	i.returning = field
 	return i
@@ -91,14 +97,20 @@ func (i *InsertUpdate) ToSQL() (string, []interface{}) {
 
 	switch i.mode {
 	case insertMode:
-		fields := make([]string, 0)
-		values := make([]string, 0)
+		if i.fromSelect != nil {
+			s, v := i.fromSelect.toSQL(len(vars))
+			query = fmt.Sprintf("INSERT INTO %s %s", i.Table, s)
+			vars = append(vars, v...)
+		} else {
+			fields := make([]string, 0)
+			values := make([]string, 0)
 
-		for j := 0; j < len(i.fields); j++ {
-			fields = append(fields, i.fields[j].key)
-			values = append(values, i.dialect.Placeholder(j))
+			for j := 0; j < len(i.fields); j++ {
+				fields = append(fields, i.fields[j].key)
+				values = append(values, i.dialect.Placeholder(j))
+			}
+			query = fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", i.Table, strings.Join(fields, ", "), strings.Join(values, ", "))
 		}
-		query = fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", i.Table, strings.Join(fields, ", "), strings.Join(values, ", "))
 	case updateMode:
 		updates := make([]string, 0)
 		for j := 0; j < len(i.fields); j++ {

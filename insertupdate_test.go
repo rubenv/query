@@ -159,6 +159,15 @@ func TestInsertNum(t *testing.T) {
 	assert.Equal(v[0], "Jack")
 	assert.Equal(v[1], int64(23))
 	assert.Equal(v[2], Company{})
+
+	s, v = b.Insert("stats").Select(
+		b.Select("*", "values").Where(
+			FieldEquals("id", 3),
+		),
+	).ToSQL()
+	assert.Equal(s, "INSERT INTO stats SELECT * FROM values WHERE id=$1")
+	assert.Equal(len(v), 1)
+	assert.Equal(v[0], 3)
 }
 
 func TestUpdate(t *testing.T) {
