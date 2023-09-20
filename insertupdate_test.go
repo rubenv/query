@@ -161,13 +161,14 @@ func TestInsertNum(t *testing.T) {
 	assert.Equal(v[2], Company{})
 
 	s, v = b.Insert("stats").Select(
-		b.Select("*", "values").Where(
-			FieldEquals("id", 3),
-		),
+		b.Select("*", "values").
+			Where(FieldEquals("id", 3)).
+			Where(Expr("start_time<(?::date + INTERVAL '1 day')", "2023-09-20")),
 	).ToSQL()
-	assert.Equal(s, "INSERT INTO stats SELECT * FROM values WHERE id=$1")
-	assert.Equal(len(v), 1)
+	assert.Equal(s, "INSERT INTO stats SELECT * FROM values WHERE id=$1 AND start_time<($2::date + INTERVAL '1 day')")
+	assert.Equal(len(v), 2)
 	assert.Equal(v[0], 3)
+	assert.Equal(v[1], "2023-09-20")
 }
 
 func TestUpdate(t *testing.T) {
