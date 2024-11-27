@@ -8,7 +8,7 @@ type Options struct {
 	OrderBy []string
 	Having  Where
 
-	Args []interface{}
+	Args []any
 }
 
 func (o *Options) Merge(opts *Options) *Options {
@@ -34,7 +34,7 @@ func (o *Options) Merge(opts *Options) *Options {
 }
 
 // Helper that only selects a single ID
-func WhereID(v interface{}) *Options {
+func WhereID(v any) *Options {
 	return &Options{
 		Where: IDEquals(v),
 		Limit: 1,

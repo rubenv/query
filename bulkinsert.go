@@ -11,11 +11,11 @@ type BulkInsert struct {
 	Table          string
 	Columns        []string
 	Dialect        Dialect
-	Values         [][]interface{}
+	Values         [][]any
 	conflictColumn []string
 }
 
-func (i *BulkInsert) Add(values ...interface{}) error {
+func (i *BulkInsert) Add(values ...any) error {
 	if len(values) != len(i.Columns) {
 		return errors.New("Length mismatch")
 	}
@@ -23,10 +23,10 @@ func (i *BulkInsert) Add(values ...interface{}) error {
 	return nil
 }
 
-func (i *BulkInsert) ToSQL() (string, []interface{}) {
+func (i *BulkInsert) ToSQL() (string, []any) {
 	switch i.mode {
 	case insertMode:
-		vars := make([]interface{}, 0)
+		vars := make([]any, 0)
 		placeholders := make([]string, 0)
 
 		for _, row := range i.Values {
@@ -42,7 +42,7 @@ func (i *BulkInsert) ToSQL() (string, []interface{}) {
 		query := fmt.Sprintf("INSERT INTO %s (%s) VALUES %s", i.Table, strings.Join(i.Columns, ", "), strings.Join(placeholders, ", "))
 		return query, vars
 	case upsertMode:
-		vars := make([]interface{}, 0)
+		vars := make([]any, 0)
 		for _, row := range i.Values {
 			vars = append(vars, row...)
 		}

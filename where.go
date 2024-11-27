@@ -29,8 +29,8 @@ type Where struct {
 	field    string
 	topLevel bool
 
-	value    interface{}
-	values   []interface{}
+	value    any
+	values   []any
 	children []Where
 
 	subQuery *Select
@@ -43,11 +43,11 @@ func All() Where {
 }
 
 // Helper that filters only on ID
-func IDEquals(v interface{}) Where {
+func IDEquals(v any) Where {
 	return FieldEquals("id", v)
 }
 
-func FieldOp(field, op string, value interface{}) Where {
+func FieldOp(field, op string, value any) Where {
 	return Where{
 		mode:  opClause,
 		op:    op,
@@ -56,19 +56,19 @@ func FieldOp(field, op string, value interface{}) Where {
 	}
 }
 
-func FieldEquals(field string, value interface{}) Where {
+func FieldEquals(field string, value any) Where {
 	return FieldOp(field, "=", value)
 }
 
-func FieldNotEquals(field string, value interface{}) Where {
+func FieldNotEquals(field string, value any) Where {
 	return FieldOp(field, "!=", value)
 }
 
-func IDIn(values []interface{}) Where {
+func IDIn(values []any) Where {
 	return FieldIn("id", values)
 }
 
-func FieldIn(field string, values []interface{}) Where {
+func FieldIn(field string, values []any) Where {
 	if len(values) == 0 {
 		values = append(values, 0)
 	}
@@ -79,7 +79,7 @@ func FieldIn(field string, values []interface{}) Where {
 	}
 }
 
-func FieldNotIn(field string, values []interface{}) Where {
+func FieldNotIn(field string, values []any) Where {
 	if len(values) == 0 {
 		values = append(values, 0)
 	}
@@ -91,7 +91,7 @@ func FieldNotIn(field string, values []interface{}) Where {
 }
 
 func IntFieldIn[T ~int64 | ~int32 | ~int](field string, values []T) Where {
-	s := make([]interface{}, len(values))
+	s := make([]any, len(values))
 	for i, v := range values {
 		s[i] = v
 	}
@@ -99,7 +99,7 @@ func IntFieldIn[T ~int64 | ~int32 | ~int](field string, values []T) Where {
 }
 
 func IntFieldNotIn(field string, values []int64) Where {
-	s := make([]interface{}, len(values))
+	s := make([]any, len(values))
 	for i, v := range values {
 		s[i] = v
 	}
@@ -107,7 +107,7 @@ func IntFieldNotIn(field string, values []int64) Where {
 }
 
 func StringFieldIn(field string, values []string) Where {
-	s := make([]interface{}, len(values))
+	s := make([]any, len(values))
 	for i, v := range values {
 		s[i] = v
 	}
@@ -115,7 +115,7 @@ func StringFieldIn(field string, values []string) Where {
 }
 
 func StringFieldNotIn(field string, values []string) Where {
-	s := make([]interface{}, len(values))
+	s := make([]any, len(values))
 	for i, v := range values {
 		s[i] = v
 	}
@@ -170,7 +170,7 @@ func Or(w ...Where) Where {
 	}
 }
 
-func FieldLike(field string, value interface{}) Where {
+func FieldLike(field string, value any) Where {
 	return Where{
 		mode:  likeClause,
 		field: field,
@@ -178,7 +178,7 @@ func FieldLike(field string, value interface{}) Where {
 	}
 }
 
-func FieldILike(field string, value interface{}) Where {
+func FieldILike(field string, value any) Where {
 	return Where{
 		mode:  ilikeClause,
 		field: field,
@@ -186,23 +186,23 @@ func FieldILike(field string, value interface{}) Where {
 	}
 }
 
-func FieldLessThan(field string, value interface{}) Where {
+func FieldLessThan(field string, value any) Where {
 	return FieldOp(field, "<", value)
 }
 
-func FieldLessOrEqualThan(field string, value interface{}) Where {
+func FieldLessOrEqualThan(field string, value any) Where {
 	return FieldOp(field, "<=", value)
 }
 
-func FieldGreaterThan(field string, value interface{}) Where {
+func FieldGreaterThan(field string, value any) Where {
 	return FieldOp(field, ">", value)
 }
 
-func FieldGreaterOrEqualThan(field string, value interface{}) Where {
+func FieldGreaterOrEqualThan(field string, value any) Where {
 	return FieldOp(field, ">=", value)
 }
 
-func Expr(expr string, args ...interface{}) Where {
+func Expr(expr string, args ...any) Where {
 	return Where{
 		mode:   exprClause,
 		field:  expr,
@@ -240,12 +240,12 @@ func (w Where) IsEmpty() bool {
 
 var placeholderRe = regexp.MustCompile(`\?+`)
 
-func (w Where) Generate(offset int, dialect Dialect) (string, []interface{}) {
+func (w Where) Generate(offset int, dialect Dialect) (string, []any) {
 	switch w.mode {
 	case emptyClause:
 		return "", nil
 	case opClause:
-		return fmt.Sprintf("%s%s%s", w.field, w.op, dialect.Placeholder(offset)), []interface{}{w.value}
+		return fmt.Sprintf("%s%s%s", w.field, w.op, dialect.Placeholder(offset)), []any{w.value}
 	case andClause:
 		return w.generateCompound(offset, "AND", dialect, w.topLevel)
 	case orClause:
@@ -263,9 +263,9 @@ func (w Where) Generate(offset int, dialect Dialect) (string, []interface{}) {
 		}
 		return fmt.Sprintf("%s NOT IN (%s)", w.field, strings.Join(placeholders, ", ")), w.values
 	case likeClause:
-		return fmt.Sprintf("%s LIKE %s", w.field, dialect.Placeholder(offset)), []interface{}{fmt.Sprintf("%%%s%%", w.value)}
+		return fmt.Sprintf("%s LIKE %s", w.field, dialect.Placeholder(offset)), []any{fmt.Sprintf("%%%s%%", w.value)}
 	case ilikeClause:
-		return fmt.Sprintf("%s ILIKE %s", w.field, dialect.Placeholder(offset)), []interface{}{fmt.Sprintf("%%%s%%", w.value)}
+		return fmt.Sprintf("%s ILIKE %s", w.field, dialect.Placeholder(offset)), []any{fmt.Sprintf("%%%s%%", w.value)}
 	case exprClause:
 		placeholders := offset
 		expr := placeholderRe.ReplaceAllStringFunc(w.field, func(match string) string {
@@ -278,9 +278,9 @@ func (w Where) Generate(offset int, dialect Dialect) (string, []interface{}) {
 		})
 		return expr, w.values
 	case nullClause:
-		return fmt.Sprintf("%s IS NULL", w.field), []interface{}{}
+		return fmt.Sprintf("%s IS NULL", w.field), []any{}
 	case notNullClause:
-		return fmt.Sprintf("%s IS NOT NULL", w.field), []interface{}{}
+		return fmt.Sprintf("%s IS NOT NULL", w.field), []any{}
 	case subqueryClause:
 		f := ""
 		if w.field != "" {
@@ -293,9 +293,9 @@ func (w Where) Generate(offset int, dialect Dialect) (string, []interface{}) {
 	}
 }
 
-func (w Where) generateCompound(offset int, verb string, dialect Dialect, topLevel bool) (string, []interface{}) {
+func (w Where) generateCompound(offset int, verb string, dialect Dialect, topLevel bool) (string, []any) {
 	parts := make([]string, 0)
-	vars := make([]interface{}, 0)
+	vars := make([]any, 0)
 	for _, clause := range w.children {
 		sql, v := clause.Generate(offset, dialect)
 		offset += len(v)

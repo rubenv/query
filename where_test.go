@@ -47,7 +47,7 @@ func TestWhereIn(t *testing.T) {
 
 	assert := assert.New(t)
 
-	id := FieldIn("id", []interface{}{4, 5, 6})
+	id := FieldIn("id", []any{4, 5, 6})
 	s, v := id.Generate(0, MySQLDialect{})
 	assert.Equal(s, "id IN (?, ?, ?)")
 	assert.Equal(len(v), 3)
@@ -61,7 +61,7 @@ func TestWhereInNum(t *testing.T) {
 
 	assert := assert.New(t)
 
-	id := FieldIn("id", []interface{}{4, 5, 6})
+	id := FieldIn("id", []any{4, 5, 6})
 	s, v := id.Generate(0, PostgreSQLDialect{})
 	assert.Equal(s, "id IN ($1, $2, $3)")
 	assert.Equal(len(v), 3)

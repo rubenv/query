@@ -10,7 +10,7 @@ func NewBuilder(dialect Dialect) *Builder {
 	}
 }
 
-func (b *Builder) Select(fields, table string, args ...interface{}) *Select {
+func (b *Builder) Select(fields, table string, args ...any) *Select {
 	return &Select{
 		Dialect: b.dialect,
 		Fields:  fields,

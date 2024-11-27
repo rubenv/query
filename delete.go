@@ -25,9 +25,9 @@ func (d *Delete) Where(where Where) *Delete {
 	return d
 }
 
-func (d *Delete) ToSQL() (string, []interface{}) {
+func (d *Delete) ToSQL() (string, []any) {
 	query := ""
-	vars := make([]interface{}, 0)
+	vars := make([]any, 0)
 
 	query = fmt.Sprintf("DELETE FROM %s", d.Table)
 	where, whereVars := d.where.Generate(0, d.Dialect)

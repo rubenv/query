@@ -14,7 +14,7 @@ type Select struct {
 	Joins   []Join
 	Unions  []*Select
 	CTEs    []With
-	Args    []interface{}
+	Args    []any
 }
 
 type With struct {
@@ -112,13 +112,13 @@ func (s *Select) With(o With) *Select {
 	return s
 }
 
-func (s *Select) ToSQL() (string, []interface{}) {
+func (s *Select) ToSQL() (string, []any) {
 	return s.toSQL(0)
 }
 
-func (s *Select) toSQL(offset int) (string, []interface{}) {
+func (s *Select) toSQL(offset int) (string, []any) {
 	b := strings.Builder{}
-	args := make([]interface{}, 0)
+	args := make([]any, 0)
 
 	if len(s.CTEs) > 0 {
 		b.WriteString("WITH\n")

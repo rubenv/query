@@ -16,7 +16,7 @@ const (
 
 type fieldValue struct {
 	key   string
-	value interface{}
+	value any
 }
 
 type InsertUpdate struct {
@@ -30,7 +30,7 @@ type InsertUpdate struct {
 	returning      string
 }
 
-func (i *InsertUpdate) Add(key string, value interface{}) *InsertUpdate {
+func (i *InsertUpdate) Add(key string, value any) *InsertUpdate {
 	i.fields = append(i.fields, fieldValue{key, value})
 	return i
 }
@@ -61,7 +61,7 @@ func (i *InsertUpdate) addStructFields(options *InsertUpdateOptions, t reflect.T
 	}
 }
 
-func (i *InsertUpdate) With(obj interface{}, opts ...WithOpt) *InsertUpdate {
+func (i *InsertUpdate) With(obj any, opts ...WithOpt) *InsertUpdate {
 	options := &InsertUpdateOptions{}
 	for _, o := range opts {
 		o(options)
@@ -88,9 +88,9 @@ func (i *InsertUpdate) Returning(field string) *InsertUpdate {
 	return i
 }
 
-func (i *InsertUpdate) ToSQL() (string, []interface{}) {
+func (i *InsertUpdate) ToSQL() (string, []any) {
 	query := ""
-	vars := make([]interface{}, 0)
+	vars := make([]any, 0)
 	for _, v := range i.fields {
 		vars = append(vars, v.value)
 	}
@@ -140,8 +140,8 @@ func (i *InsertUpdate) HasClauses() bool {
 	return len(i.fields) > 0
 }
 
-func (i *InsertUpdate) Clauses() map[string]interface{} {
-	clauses := make(map[string]interface{})
+func (i *InsertUpdate) Clauses() map[string]any {
+	clauses := make(map[string]any)
 	for _, field := range i.fields {
 		clauses[field.key] = field.value
 	}
