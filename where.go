@@ -90,7 +90,7 @@ func FieldNotIn(field string, values []interface{}) Where {
 	}
 }
 
-func IntFieldIn(field string, values []int64) Where {
+func IntFieldIn[T ~int64 | ~int32 | ~int](field string, values []T) Where {
 	s := make([]interface{}, len(values))
 	for i, v := range values {
 		s[i] = v
