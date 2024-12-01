@@ -17,6 +17,7 @@ const (
 type fieldValue struct {
 	key   string
 	value any
+	from  *Select
 }
 
 type InsertUpdate struct {
@@ -31,7 +32,12 @@ type InsertUpdate struct {
 }
 
 func (i *InsertUpdate) Add(key string, value any) *InsertUpdate {
-	i.fields = append(i.fields, fieldValue{key, value})
+	i.fields = append(i.fields, fieldValue{key: key, value: value})
+	return i
+}
+
+func (i *InsertUpdate) AddSelect(key string, s *Select) *InsertUpdate {
+	i.fields = append(i.fields, fieldValue{key: key, from: s})
 	return i
 }
 
@@ -91,8 +97,12 @@ func (i *InsertUpdate) Returning(field string) *InsertUpdate {
 func (i *InsertUpdate) ToSQL() (string, []any) {
 	query := ""
 	vars := make([]any, 0)
+	whereOffset := 0
 	for _, v := range i.fields {
-		vars = append(vars, v.value)
+		if v.from == nil {
+			vars = append(vars, v.value)
+			whereOffset += 1
+		}
 	}
 
 	switch i.mode {
@@ -113,12 +123,18 @@ func (i *InsertUpdate) ToSQL() (string, []any) {
 		}
 	case updateMode:
 		updates := make([]string, 0)
-		for j := 0; j < len(i.fields); j++ {
-			updates = append(updates, fmt.Sprintf("%s=%s", i.fields[j].key, i.dialect.Placeholder(j)))
+		for j, field := range i.fields {
+			if field.from == nil {
+				updates = append(updates, fmt.Sprintf("%s=%s", field.key, i.dialect.Placeholder(j)))
+			} else {
+				s, v := field.from.toSQL(len(vars))
+				updates = append(updates, fmt.Sprintf("%s=(%s)", field.key, s))
+				vars = append(vars, v...)
+			}
 		}
 
 		query = fmt.Sprintf("UPDATE %s SET %s", i.Table, strings.Join(updates, ", "))
-		where, whereVars := i.where.Generate(len(i.fields), i.dialect)
+		where, whereVars := i.where.Generate(whereOffset, i.dialect)
 		if where != "" {
 			query = fmt.Sprintf("%s WHERE %s", query, where)
 		}

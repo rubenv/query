@@ -303,6 +303,19 @@ func TestUpdateNum(t *testing.T) {
 	assert.Equal(len(v), 2)
 	assert.Equal(v[0], "Jack")
 	assert.Equal(v[1], 4)
+
+	s, v = b.Update("cases l", And(
+		StringFieldIn("l.id", []string{"a", "b", "c"}),
+		IsNotNull("l.file"),
+		IsNull("l.file_ref"),
+	)).AddSelect(
+		"file_ref", b.Select("ref", "files s").Where(Expr("s.id=l.file")),
+	).ToSQL()
+	assert.Equal(s, "UPDATE cases l SET file_ref=(SELECT ref FROM files s WHERE s.id=l.file) WHERE (l.id IN ($1, $2, $3) AND l.file IS NOT NULL AND l.file_ref IS NULL)")
+	assert.Equal(len(v), 3)
+	assert.Equal(v[0], "a")
+	assert.Equal(v[1], "b")
+	assert.Equal(v[2], "c")
 }
 
 func TestUpsert(t *testing.T) {
