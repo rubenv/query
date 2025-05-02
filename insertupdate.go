@@ -55,7 +55,7 @@ func (i *InsertUpdate) addStructFields(options *InsertUpdateOptions, t reflect.T
 		if len(parts) > 1 {
 			if parts[1] == "autoincrement" {
 				val := v.Field(j)
-				if val.IsZero() && !options.CopyAutoIncrement {
+				if (i.mode != insertMode || val.IsZero()) && !options.CopyAutoIncrement {
 					continue
 				}
 			}

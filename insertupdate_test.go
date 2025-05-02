@@ -237,6 +237,31 @@ func TestUpdate(t *testing.T) {
 	assert.Equal(s, "UPDATE customer SET firstname=?")
 	assert.Equal(len(v), 1)
 	assert.Equal(v[0], "Bob")
+
+	type VAT struct {
+		Nr int64 `db:"nr"`
+	}
+
+	type Company struct {
+		ID   int64  `db:"id,autoincrement"`
+		Name string `db:"name"`
+		VAT
+	}
+
+	s, v = b.Update("company", FieldEquals("id", 123)).
+		With(&Company{
+			ID:   123,
+			Name: "Corp",
+			VAT: VAT{
+				Nr: 1234,
+			},
+		}).
+		ToSQL()
+	assert.Equal(s, "UPDATE company SET name=?, nr=? WHERE id=?")
+	assert.Equal(len(v), 3)
+	assert.Equal(v[0], "Corp")
+	assert.Equal(v[1], int64(1234))
+	assert.Equal(v[2], int(123))
 }
 
 func TestUpdateNum(t *testing.T) {
