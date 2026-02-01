@@ -116,6 +116,11 @@ func (s *Select) ToSQL() (string, []any) {
 	return s.toSQL(0)
 }
 
+func (s *Select) ToSQLArgs(existingArgs []any) (string, []any) {
+	q, args := s.toSQL(len(existingArgs))
+	return q, append(existingArgs, args...)
+}
+
 func (s *Select) toSQL(offset int) (string, []any) {
 	b := strings.Builder{}
 	args := make([]any, 0)
