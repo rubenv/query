@@ -76,3 +76,7 @@ func (b *Builder) Upsert(table string, conflictColumn ...string) *InsertUpdate {
 		conflictColumn: conflictColumn,
 	}
 }
+
+func (b *Builder) Placeholder(idx int) string {
+	return b.dialect.Placeholder(idx)
+}
