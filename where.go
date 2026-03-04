@@ -130,6 +130,14 @@ func Exists(subQuery *Select) Where {
 	}
 }
 
+func NotExists(subQuery *Select) Where {
+	return Where{
+		mode:     subqueryClause,
+		op:       "NOT EXISTS",
+		subQuery: subQuery,
+	}
+}
+
 func Any(subQuery *Select) Where {
 	return Where{
 		mode:     subqueryClause,
