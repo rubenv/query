@@ -21,6 +21,7 @@ const (
 	subqueryClause
 	nullClause
 	notNullClause
+	arrayOverlapsClause
 )
 
 type Where struct {
@@ -164,6 +165,20 @@ func ArrayOverlaps(field string, subQuery *Select) Where {
 	}
 }
 
+func ArrayOverlapsValues[T any, V []T](field string, values V) Where {
+	s := make([]any, len(values))
+	for i, v := range values {
+		s[i] = v
+	}
+
+	return Where{
+		mode:   arrayOverlapsClause,
+		field:  field,
+		op:     "&&",
+		values: s,
+	}
+}
+
 func And(w ...Where) Where {
 	return Where{
 		mode:     andClause,
@@ -296,6 +311,8 @@ func (w Where) Generate(offset int, dialect Dialect) (string, []any) {
 		}
 		q, args := w.subQuery.toSQL(offset)
 		return fmt.Sprintf("%s%s (%s)", f, w.op, q), args
+	case arrayOverlapsClause:
+		return fmt.Sprintf("%s %s (%s)", w.field, w.op, dialect.Placeholder(offset)), w.values
 	default:
 		panic(fmt.Sprintf("Unknown mode %#v", w.mode))
 	}

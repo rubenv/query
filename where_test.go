@@ -177,3 +177,16 @@ func TestExpr(t *testing.T) {
 	assert.Equal(len(v), 1)
 	assert.Equal(v[0], "Ruben")
 }
+
+func TestArrayOverlapsValues(t *testing.T) {
+	t.Parallel()
+
+	assert := assert.New(t)
+
+	w := ArrayOverlapsValues("tags", []string{"foo", "bar"})
+	s, v := w.Generate(0, PostgreSQLDialect{})
+	assert.Equal(s, "tags && ($1)")
+	assert.Equal(len(v), 2)
+	assert.Equal(v[0], "foo")
+	assert.Equal(v[1], "bar")
+}
