@@ -165,12 +165,8 @@ func ArrayOverlaps(field string, subQuery *Select) Where {
 	}
 }
 
-func ArrayOverlapsValues[T any, V []T](field string, values V) Where {
-	s := make([]any, len(values))
-	for i, v := range values {
-		s[i] = v
-	}
-
+func ArrayOverlapsValues(field string, values any) Where {
+	s := []any{values}
 	return Where{
 		mode:   arrayOverlapsClause,
 		field:  field,
