@@ -89,11 +89,38 @@ func TestInsert(t *testing.T) {
 		}).
 		Returning("id").
 		ToSQL()
-	assert.Equal(s, "INSERT INTO company (id, name, nr) VALUES (?, ?, ?) RETURNING id")
+	assert.Equal(s, "INSERT INTO company (name, nr) VALUES (?, ?) RETURNING id")
+	assert.Equal(len(v), 2)
+	assert.Equal(v[0], "Corp")
+	assert.Equal(v[1], int64(1234))
+
+	s, v = b.Insert("company").
+		With(&Company{
+			ID:   3,
+			Name: "Corp",
+			VAT: VAT{
+				Nr: 1234,
+			},
+		}, WithAutoIncrement()).
+		ToSQL()
+	assert.Equal(s, "INSERT INTO company (id, name, nr) VALUES (?, ?, ?)")
 	assert.Equal(len(v), 3)
-	assert.Equal(v[0], int64(123))
+	assert.Equal(v[0], int64(3))
 	assert.Equal(v[1], "Corp")
 	assert.Equal(v[2], int64(1234))
+
+	s, v = b.Insert("company").
+		With(&Company{
+			Name: "Corp",
+			VAT: VAT{
+				Nr: 1234,
+			},
+		}, WithAutoIncrement()).
+		ToSQL()
+	assert.Equal(s, "INSERT INTO company (name, nr) VALUES (?, ?)")
+	assert.Equal(len(v), 2)
+	assert.Equal(v[0], "Corp")
+	assert.Equal(v[1], int64(1234))
 }
 
 func TestInsertNum(t *testing.T) {
