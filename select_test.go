@@ -72,6 +72,32 @@ func TestQuery(t *testing.T) {
 	assert.Equal(v[1], 25)
 }
 
+func TestSelectExpr(t *testing.T) {
+	t.Parallel()
+
+	assert := assert.New(t)
+
+	b := NewBuilder(PostgreSQLDialect{})
+
+	s, v := b.SelectExpr("?::text", "hello").ToSQL()
+	assert.Equal(s, "SELECT $1::text")
+	assert.Equal(len(v), 1)
+	assert.Equal(v[0], "hello")
+}
+
+func TestSelectForUpdate(t *testing.T) {
+	t.Parallel()
+
+	assert := assert.New(t)
+
+	b := NewBuilder(PostgreSQLDialect{})
+
+	s, v := b.Select("*", "contacts").Where(IDEquals(123)).ForUpdate().ToSQL()
+	assert.Equal(s, "SELECT * FROM contacts WHERE id=$1 FOR UPDATE")
+	assert.Equal(len(v), 1)
+	assert.Equal(v[0], 123)
+}
+
 func TestQueryNum(t *testing.T) {
 	t.Parallel()
 

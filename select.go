@@ -15,6 +15,14 @@ type Select struct {
 	Unions  []*Select
 	CTEs    []With
 	Args    []any
+
+	RowLock *RowLock
+}
+
+type RowLock struct {
+	Strength string
+	Tables   []string
+	Wait     string
 }
 
 type With struct {
@@ -64,6 +72,52 @@ func (s *Select) Limit(limit int64) *Select {
 
 func (s *Select) Offset(offset int64) *Select {
 	s.Options.Offset = offset
+	return s
+}
+
+// Row-locking methods are PostgreSQL-specific and must run inside a transaction.
+func (s *Select) lockRows(strength string) *Select {
+	s.requirePostgresLock()
+	s.RowLock = &RowLock{Strength: strength}
+	return s
+}
+
+func (s *Select) requirePostgresLock() {
+	switch s.Dialect.(type) {
+	case PostgreSQLDialect, *PostgreSQLDialect:
+	default:
+		panic("row locking requires a PostgreSQL dialect")
+	}
+}
+
+func (s *Select) ForUpdate() *Select      { return s.lockRows("UPDATE") }
+func (s *Select) ForNoKeyUpdate() *Select { return s.lockRows("NO KEY UPDATE") }
+func (s *Select) ForShare() *Select       { return s.lockRows("SHARE") }
+func (s *Select) ForKeyShare() *Select    { return s.lockRows("KEY SHARE") }
+
+// Of restricts a PostgreSQL row lock to the given tables or aliases.
+// Identifiers are SQL fragments, like the table and field arguments to Select.
+func (s *Select) Of(tables ...string) *Select {
+	if s.RowLock == nil || len(tables) == 0 {
+		panic("Of requires a row lock and at least one table")
+	}
+	s.RowLock.Tables = append(s.RowLock.Tables, tables...)
+	return s
+}
+
+func (s *Select) NoWait() *Select {
+	if s.RowLock == nil || s.RowLock.Wait == "SKIP LOCKED" {
+		panic("NoWait requires a row lock without SkipLocked")
+	}
+	s.RowLock.Wait = "NOWAIT"
+	return s
+}
+
+func (s *Select) SkipLocked() *Select {
+	if s.RowLock == nil || s.RowLock.Wait == "NOWAIT" {
+		panic("SkipLocked requires a row lock without NoWait")
+	}
+	s.RowLock.Wait = "SKIP LOCKED"
 	return s
 }
 
@@ -131,15 +185,22 @@ func (s *Select) toSQL(offset int) (string, []any) {
 			if i > 0 {
 				b.WriteString(",\n")
 			}
-			q, a := w.SubSelect.toSQL(len(args))
+			q, a := w.SubSelect.toSQL(offset + len(args))
 			b.WriteString(fmt.Sprintf("    %s AS (%s)", w.Name, q))
 			args = append(args, a...)
 		}
 		b.WriteString("\n")
 	}
 
-	args = append(args, s.Args...)
-	b.WriteString(fmt.Sprintf("SELECT %s FROM %s", s.Fields, s.Table))
+	b.WriteString("SELECT ")
+	if s.Table == "" {
+		q, values := Expr(s.Fields, s.Args...).Generate(offset+len(args), s.Dialect)
+		b.WriteString(q)
+		args = append(args, values...)
+	} else {
+		args = append(args, s.Args...)
+		b.WriteString(fmt.Sprintf("%s FROM %s", s.Fields, s.Table))
+	}
 	for _, join := range s.Joins {
 		b.WriteString(" ")
 		b.WriteString(join.Join)
@@ -187,6 +248,18 @@ func (s *Select) toSQL(offset int) (string, []any) {
 	if s.Options.Offset > 0 {
 		b.WriteString(" OFFSET ")
 		b.WriteString(strconv.FormatInt(s.Options.Offset, 10))
+	}
+	if s.RowLock != nil {
+		b.WriteString(" FOR ")
+		b.WriteString(s.RowLock.Strength)
+		if len(s.RowLock.Tables) > 0 {
+			b.WriteString(" OF ")
+			b.WriteString(strings.Join(s.RowLock.Tables, ", "))
+		}
+		if s.RowLock.Wait != "" {
+			b.WriteString(" ")
+			b.WriteString(s.RowLock.Wait)
+		}
 	}
 	return b.String(), args
 }

@@ -19,6 +19,10 @@ func (b *Builder) Select(fields, table string, args ...any) *Select {
 	}
 }
 
+func (b *Builder) SelectExpr(expression string, args ...any) *Select {
+	return &Select{Dialect: b.dialect, Fields: expression, Args: args}
+}
+
 func (b *Builder) BulkInsert(table string, columns []string) *BulkInsert {
 	return &BulkInsert{
 		mode:    insertMode,
