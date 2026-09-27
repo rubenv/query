@@ -74,7 +74,7 @@ func (i *InsertUpdate) With(obj any, opts ...WithOpt) *InsertUpdate {
 	}
 
 	v := reflect.ValueOf(obj)
-	if v.Type().Kind() == reflect.Ptr {
+	if v.Type().Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	t := v.Type()
